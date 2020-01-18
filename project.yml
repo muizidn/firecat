@@ -9,43 +9,7 @@ settings:
       CLANG_ENABLE_MODULES: "YES"
       ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon_Developer
       ALWAYS_SEARCH_USER_PATHS: "NO"
-      CODE_SIGN_ENTITLEMENTS: "$(inherit)Client/Entitlements/FennecApplication.entitlements"
-      CODE_SIGN_IDENTITY: iPhone Developer
-      DEVELOPMENT_TEAM: 43AQ936H96
-      ENABLE_BITCODE: "NO"
-      FRAMEWORK_SEARCH_PATHS:
-        - "$(inherited)"
-        - "$(BUILD_DIR)/Release$(EFFECTIVE_PLATFORM_NAME)"
-        - "$(PROJECT_DIR)/Carthage/Build/iOS"
-      HEADER_SEARCH_PATHS:
-        - "$(inherited)"
-        - "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include"
-        - "$(SRCROOT)"
-        - "$(SDKROOT)/usr/include/libxml2"
-        - "$(BUILD_DIR)/Debug$(EFFECTIVE_PLATFORM_NAME)/include/**"
-        - "$(BUILD_DIR)/Release$(EFFECTIVE_PLATFORM_NAME)/include/**"
-      INFOPLIST_FILE: Client/Info.plist
       IPHONEOS_DEPLOYMENT_TARGET: "11.0"
-      LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks"
-      OTHER_LDFLAGS:
-        - "-ObjC"
-        - "-lxml2"
-        - "-framework"
-        - AssetsLibrary
-        - "-framework"
-        - CoreText
-        - "-framework"
-        - CoreTelephony
-        - "-framework"
-        - SystemConfiguration
-        - "-framework"
-        - QuartzCore
-        - "-framework"
-        - CoreVideo
-        - "-framework"
-        - AVFoundation
-        - "-framework"
-        - CoreMedia
       OTHER_SWIFT_FLAGS: "-DMOZ_CHANNEL_FENNEC -DMOZ_TARGET_CLIENT"
       PROVISIONING_PROFILE_SPECIFIER: Fennec Development
       SWIFT_OPTIMIZATION_LEVEL: "-Onone"
@@ -111,8 +75,12 @@ targets:
       HEADER_SEARCH_PATHS:
         - "$(inherited)"
         - "$SRCROOT/Shared"
+        - "$(SDKROOT)/usr/include/libxml2"
       PRODUCT_BUNDLE_IDENTIFIER: org.mozilla.ios.Storage
       PRODUCT_NAME: $(TARGET_NAME)
+      OTHER_LDFLAGS:
+        - "-ObjC"
+        - "-lxml2"
     dependencies:
       - target: Shared
       - carthage: XCGLogger
@@ -166,6 +134,83 @@ targets:
       - target: Account
       - target: Storage
       - target: SyncTelemetry
+  NotificationService:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: "Extensions"
+        includes:
+          - "NotificationService/*.swift"
+      - path: Providers
+        includes:
+          - "Profile.swift"
+          - "SyncStatusResolver.swift"
+      - "Account/FxAPushMessageHandler.swift"
+    settings:
+      INFOPLIST_FILE: Extensions/NotificationService/Info.plist
+      HEADER_SEARCH_PATHS:
+        - "$SRCROOT/Storage"
+        - "$SRCROOT/Shared"
+      PRODUCT_NAME: $(TARGET_NAME)
+      PRODUCT_BUNDLE_IDENTIFIER: org.mozilla.ios.Fennec.NotificationService
+    dependencies:
+      - target: Shared
+      - target: Storage
+      - target: Sync
+  Today:
+    type: app-extension
+    platform: iOS
+    sources:
+      - "Client/Extensions/UIPasteboardExtensions.swift"
+      - "Extensions/Today/TodayViewController.swift"
+    settings:
+      INFOPLIST_FILE: Extensions/Today/Info.plist
+      HEADER_SEARCH_PATHS:
+        - "$SRCROOT/Shared"
+      PRODUCT_NAME: $(TARGET_NAME)
+      PRODUCT_BUNDLE_IDENTIFIER: org.mozilla.ios.Fennec.Today
+    dependencies:
+      - sdk: NotificationCenter.framework
+      - target: Shared
+      - carthage: SnapKit
+  ShareTo:
+    type: app-extension
+    platform: iOS
+    sources:
+    - path: Providers
+      includes:
+        - "Profile.swift"
+        - "SyncStatusResolver.swift"
+    - path: Extensions/ShareTo
+      includes: 
+        - "*.swift"
+    - path: Client
+      includes:
+      - "Frontend/Home/PanelDataObservers.swift"
+      - "Frontend/Extensions/InstructionsViewController.swift"
+      - "Frontend/Extensions/DevicePickerViewController.swift"
+      - "Frontend/Browser/SearchEngines.swift"
+      - "Frontend/Browser/Punycode.swift"
+      - "Frontend/Browser/DefaultSearchPrefs.swift"
+      - "Frontend/Browser/URIFixup.swift"
+      - "Frontend/Browser/OpenSearch.swift"
+      - "Frontend/photon-colors.swift"
+    settings:
+      INFOPLIST_FILE: Extensions/ShareTo/Info.plist
+      HEADER_SEARCH_PATHS:
+        - "$SRCROOT/Shared"
+        - "$SRCROOT/Storage"
+      PRODUCT_NAME: $(TARGET_NAME)
+      PRODUCT_BUNDLE_IDENTIFIER: org.mozilla.ios.Fennec.ShareTo
+    dependencies:
+      - sdk: ImageIO.framework
+      - target: Shared
+      - target: Storage
+      - target: Sync
+      - carthage: SnapKit
+      - carthage: Fuzi
+      - carthage: SDWebImage
+      - framework: FxA/Carthage/Build/iOS/FxA.framework
   Client:
     type: application
     platform: iOS
@@ -253,6 +298,9 @@ targets:
     dependencies:
       - sdk: Accelerate.framework
       - sdk: SafariServices.framework
+      - target: NotificationService
+      - target: Today
+      - target: ShareTo
       - target: Shared
       - target: Account
       - target: Storage
